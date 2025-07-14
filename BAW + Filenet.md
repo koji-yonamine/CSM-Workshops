@@ -1,4 +1,4 @@
-# Sicoob - BAW and Filenet
+# Hands-on: BAW e Filenet
 
 ## Acessos Importantes 
 
