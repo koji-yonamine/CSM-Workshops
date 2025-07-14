@@ -1,18 +1,18 @@
 # Sicoob - BAW and Filenet
 
-## Acesso aos ambientes 
+## Acessos Importantes 
 
 **Cloud pak:**  
-https://cpd-cp4ba.apps.686bc0d26f7b07aa81b9e607.am1.techzone.ibm.com/zen/#/homepage
+https://<SEU PATH>/zen/#/homepage
 
 **Filenet Navigator – Ver documentos:**  
-https://cpd-cp4ba.apps.686bc0d26f7b07aa81b9e607.am1.techzone.ibm.com/icn/navigator/
+https://<SEU PATH>/icn/navigator/
 
 **Filenet Navigator – Configurações:**  
-https://cpd-cp4ba.apps.686bc0d26f7b07aa81b9e607.am1.techzone.ibm.com/icn/navigator/?desktop=admin
+https://<SEU PATH>/icn/navigator/?desktop=admin
 
 **Filenet ACCE – Configurações:**  
-https://cpd-cp4ba.apps.686bc0d26f7b07aa81b9e607.am1.techzone.ibm.com/cpe/acce/
+https://<SEU PATH>/cpe/acce/
 
 ---
 
@@ -31,13 +31,13 @@ Adicionar novo Servidor:
 
 - Nome: qualquer  
 - Servidor: Enterprise Content Management  
-- Host: `icp4adeploy-cmis-svc.cp4ba.svc.cluster.local`  
+- Host: `<SEU PATH>`  
 - Porta: `9443`  
 - Caminho: `/cmis/openfncmis_wlp/services`  
 - Servidor Seguro: `TRUE`  
-- Repositório: `BAWTOS`  
-- Usuário: `cpadmin`  
-- Senha: `uPuks-JIugQ-zuljs-SufXD`
+- Repositório: `<SEU OBJECT STORE>`  
+- Usuário: `<SEU USER>`  
+- Senha: `<SUA SENHA>`
 
 
 ---
@@ -263,4 +263,172 @@ Privado {
 }
 
 ]]
+```
  
+**TratamentoFormularioJSON**
+```Javascript
+Tarefa de Script [
+Script{
+var formData = {
+  cliente: tw.local.dadosClienteBO,
+  contrato: tw.local.dadosContratoBO
+};
+
+tw.local.formJSON = JSON.stringify(formData);
+}
+
+Variáveis [
+Entrada {
+  dadosClienteBO (dadosClienteBO)
+  dadosContratoBO (dadosContratoBO)
+}
+Saída {
+  pdfBase64 (string)
+  formJSON (string)
+}
+Privado {
+  stringPDF (string)
+}
+
+]]
+```
+
+---
+
+## Workflow
+
+```Javascript
+Variáveis [
+  Entrada {
+    meuFormulario (dadosClienteBO)
+  }
+  Saída { 
+    formJSON (string)
+    pdfB64 (string)
+  }
+  Privado {
+    dadosClienteBO (dadosClienteBO)
+    dadosContratoBO (dadosContratoBO)
+  }
+]
+```
+
+**Processo:**
+
+*Formulário Digital (usuário)*
+- Implementação:
+  - ContratoPenhor
+- Saída:
+  – DadosCliente
+  - DadoContrato
+
+*TratamentoFormulário (sistema)*
+- Implementação:
+  - TratamentoFormulário
+- Entrada:
+  - DadosContratoBO
+  - DadosClienteBO
+- Saída:
+  - pdfBase64
+  - formJSON
+
+*Salvando no Filenet PDF (sistema)*
+- Implementação:
+  - SaveFileNet
+- Entrada:
+  - pdfBase64
+  - formJSON
+
+*Salvando no Filenet JSON (sistema)*
+- Implementação:
+  - SaveFileNetJSON
+- Entrada:
+  - pdfBase64
+  - formJSON
+
+*Visualizando no Filenet (usuário)*
+- Implementação:
+  - ConexaoFilenet
+
+## Coach
+**ContratoPenhor**
+
+```Javascript
+Variáveis [
+Entrada {
+  dadosClientePenhor (dadosClienteBO)
+  dadosContratoPenhor (dadosContratoBO)
+}
+Saída {
+  dadosClientePenhor (dadosClienteBO)
+  dadosContratoPenhor (dadosContratoBO)
+}
+
+Associação - View 1 {
+dadosClientePenhor (dadosClienteBO)
+}
+Associação - View 2{
+dadosContratoPenhor (dadosContratoBO)
+}
+]
+```
+
+**Views**
+
+*DadosCliente:*
+- Plain text:
+  - nome (string)
+  - cpf (string)
+  - telefone (string)
+ 
+```Javascript
+Variáveis [
+Dados de Negócio {
+  dadosClienteBO (dadosClienteBO)
+}
+
+Associação [
+plain text: nome - dadosClienteBO.nome
+plain text: cpf - dadosClienteBO.cpf
+plain text: telefone - dadosClienteBO.telefone
+]
+
+]
+```
+
+*DadosContrato:*
+- Plain text:
+  - agencia (string)
+  - codigo (string)
+ 
+```Javascript
+Variáveis [
+Dados de Negócio {
+  dadosContratoBO (dadosContratoBO)
+}
+
+Associação [
+plain text: agencia - dadosContratoBO.agencia
+plain text: codigo - dadosContratoBO.codigo
+]
+
+]
+```
+
+---
+
+ConexaoFilenet
+
+Toolkit:
+  - Case Manager UI
+    - Content List
+
+```Javascript
+Configurações (Busque informações neste formato) [
+Nome do Repositório: BAWTOS
+ID de pasta: {97EA7AF0-0000-C1F4-B95E-B13B29DC44DE}
+Serviço Graphql: https://<SEU PATH>/content-services-graphql/graphql
+```
+
+Para o ID da pasta, podemos acessar o Navigator (certifique-se de que esteja na mesma basta do Object Store utilizado) e clique em propriedades. O ID necessário é o segundo ou último apresentado: 
+<img width="886" height="456" alt="image" src="https://github.com/user-attachments/assets/9f30b50c-25ba-4b8a-8704-549dc4116973" />
